@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#040a22">
+  <title>Perguntas do Público | UNIP</title>
+  <meta name="description" content="Perguntas do público exibidas no telão — Inteligência Artificial em Ação, UNIP.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800;1,900&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="pagina-telao">
+  <canvas id="fundo-rede" aria-hidden="true"></canvas>
+  <div class="fundo-brilho" aria-hidden="true"></div>
+
+  <header class="topo-telao">
+    <div class="logo-unip">UNIP</div>
+    <div class="titulo-evento">
+      <h1>Inteligência<br>Artificial <span>em Ação</span></h1>
+      <p class="eixos">Educação <i>•</i> Trabalho <i>•</i> <b>Inovação</b></p>
+    </div>
+    <img class="topo-ia" src="assets/img/ia-head.png" alt="" aria-hidden="true">
+    <p class="slogan">Ideias hoje.<br>Mais possibilidades<br>amanhã.</p>
+  </header>
+
+  <main class="telao-conteudo perguntas">
+    <section class="cartao cartao-pergunta">
+      <div class="rotulo-secao forte">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno ico-chat"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="10.5" r="1" class="pt"/><circle cx="12" cy="10.5" r="1" class="pt"/><circle cx="15.5" cy="10.5" r="1" class="pt"/></svg>
+        <span>Pergunta do público</span>
+        <i class="linha-titulo"></i>
+      </div>
+
+      <div class="pergunta-caixa" id="pergunta-caixa" aria-live="polite">
+        <div class="avatar" id="pergunta-avatar">?</div>
+        <div class="pergunta-corpo">
+          <p class="pergunta-nome" id="pergunta-nome">Aguardando perguntas</p>
+          <p class="pergunta-meta" id="pergunta-meta">As perguntas enviadas pelo público aparecerão aqui.</p>
+          <hr>
+          <p class="pergunta-texto" id="pergunta-texto">Envie a sua pela aba <span class="hl">Perguntas</span> no site do evento!</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="controles" aria-label="Navegação das perguntas">
+      <button class="btn-secundario" id="btn-anterior" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="seta"><path d="M15 5l-7 7 7 7"/></svg>
+        <span>Anterior</span>
+      </button>
+
+      <div class="paginador">
+        <p><strong id="pos-atual">0</strong> de <span id="pos-total">0</span></p>
+        <div class="pontos" id="pontos"></div>
+      </div>
+
+      <button class="btn-principal" id="btn-proxima" disabled>
+        <span>Próxima pergunta</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="seta"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </nav>
+    <p class="status-conexao" id="status-conexao" hidden></p>
+  </main>
+
+  <!-- Botões do operador do telão: zerar perguntas e tela cheia -->
+  <div class="acoes-operador">
+    <button class="btn-operador" id="btn-zerar" title="Zerar perguntas" aria-label="Zerar perguntas">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+    <button class="btn-operador" id="btn-tela-cheia" title="Tela cheia (F)" aria-label="Tela cheia">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
+
+  <dialog class="modal" id="modal-zerar" aria-labelledby="modal-zerar-titulo">
+    <form class="cartao modal-caixa" id="form-zerar" method="dialog" novalidate>
+      <h2 id="modal-zerar-titulo">Zerar perguntas</h2>
+      <p class="modal-texto">
+        O telão fica <strong>vazio</strong>, pronto para receber novas perguntas.
+        As perguntas atuais não são perdidas: vão para a aba <strong>Histórico de perguntas</strong> da planilha.
+      </p>
+
+      <label class="campo">
+        <span class="rotulo">Senha de administrador</span>
+        <span class="entrada">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input type="password" id="campo-senha" autocomplete="current-password" placeholder="Digite a senha">
+        </span>
+      </label>
+
+      <p class="erro" id="zerar-erro" role="alert" hidden></p>
+
+      <div class="modal-acoes">
+        <button type="button" class="btn-secundario" id="btn-cancelar-zerar">Cancelar</button>
+        <button type="submit" class="btn-principal btn-perigo" id="btn-confirmar-zerar"><span>Zerar agora</span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <p class="toast" id="toast" role="status" hidden></p>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/comum.js"></script>
+  <script src="assets/js/telao-perguntas.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#040a22">
+  <title>IA em Ação | UNIP</title>
+  <meta name="description" content="Votação e perguntas da palestra Inteligência Artificial em Ação: Educação, Trabalho e Inovação — UNIP.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800;1,900&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="pagina-participante">
+  <canvas id="fundo-rede" aria-hidden="true"></canvas>
+  <div class="fundo-brilho" aria-hidden="true"></div>
+
+  <!-- Ilustrações reutilizáveis (robô e confirmação) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="gradOrbita" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#c04bff"/>
+        <stop offset=".55" stop-color="#4f6bff"/>
+        <stop offset="1" stop-color="#19e3ff"/>
+      </linearGradient>
+      <filter id="brilho" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="2.4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <g id="orbitas">
+        <g>
+          <ellipse cx="120" cy="80" rx="102" ry="40" transform="rotate(-16 120 80)" fill="none" stroke="url(#gradOrbita)" stroke-width="2.4" filter="url(#brilho)"/>
+          <ellipse cx="120" cy="80" rx="90" ry="52" transform="rotate(30 120 80)" fill="none" stroke="url(#gradOrbita)" stroke-width="1.6" opacity=".8" filter="url(#brilho)"/>
+          <animateTransform attributeName="transform" type="rotate" from="0 120 80" to="360 120 80" dur="40s" repeatCount="indefinite"/>
+        </g>
+        <circle cx="34" cy="108" r="4" fill="#c04bff" filter="url(#brilho)"/>
+        <circle cx="206" cy="48" r="4" fill="#19e3ff" filter="url(#brilho)"/>
+        <circle cx="70" cy="26" r="3" fill="#ff7be5" filter="url(#brilho)"/>
+        <circle cx="186" cy="124" r="3" fill="#19e3ff" filter="url(#brilho)"/>
+        <rect x="200" y="78" width="9" height="9" rx="2" fill="#2f8bff" filter="url(#brilho)"/>
+        <rect x="214" y="18" width="8" height="8" rx="1" fill="none" stroke="#5a6bff" stroke-width="1.5"/>
+      </g>
+    </defs>
+    <symbol id="ilustra-robo" viewBox="0 0 240 160">
+      <use href="#orbitas"/>
+      <g fill="none" stroke="#19e3ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilho)">
+        <line x1="120" y1="40" x2="120" y2="52"/>
+        <circle cx="120" cy="34" r="6" fill="#19e3ff"/>
+        <path d="M98 52h44a16 16 0 0 1 16 16v26a16 16 0 0 1-16 16h-18l-14 13v-13h-12a16 16 0 0 1-16-16V68a16 16 0 0 1 16-16z" fill="rgba(4,14,44,.92)"/>
+        <rect x="70" y="69" width="12" height="24" rx="5" fill="rgba(4,14,44,.92)"/>
+        <rect x="158" y="69" width="12" height="24" rx="5" fill="rgba(4,14,44,.92)"/>
+        <path d="M100 82q6-8 12 0M128 82q6-8 12 0" stroke-width="4.5"/>
+        <path d="M110 93q10 8 20 0" stroke-width="4.5"/>
+      </g>
+    </symbol>
+    <symbol id="ilustra-ok" viewBox="0 0 240 160">
+      <use href="#orbitas"/>
+      <g fill="none" stroke="#19e3ff" stroke-linecap="round" stroke-linejoin="round" filter="url(#brilho)">
+        <circle cx="120" cy="80" r="40" stroke-width="7" fill="rgba(4,14,44,.92)"/>
+        <path d="M101 81l13 13 26-27" stroke-width="7"/>
+      </g>
+    </symbol>
+  </svg>
+
+  <header class="topo">
+    <div class="topo-marca">
+      <div class="logo-unip">UNIP</div>
+      <div class="titulo-evento">
+        <h1>Inteligência<br>Artificial<br><span>em Ação</span></h1>
+        <p class="eixos">Educação <i>•</i> Trabalho <i>•</i> Inovação</p>
+      </div>
+    </div>
+    <img class="topo-ia" src="assets/img/ia-head.png" alt="" aria-hidden="true">
+  </header>
+
+  <main class="moldura">
+    <!-- ABAS -->
+    <div class="abas" role="tablist" aria-label="Seções">
+      <button class="aba" role="tab" id="aba-votacao" aria-controls="painel-votacao" aria-selected="true" data-aba="votacao">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="4" height="9" rx="1.5"/><rect x="10" y="4" width="4" height="16" rx="1.5"/><rect x="16" y="8" width="4" height="12" rx="1.5"/></svg>
+        Votação
+      </button>
+      <button class="aba" role="tab" id="aba-perguntas" aria-controls="painel-perguntas" aria-selected="false" data-aba="perguntas" tabindex="-1">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="10.5" r="1" class="pt"/><circle cx="12" cy="10.5" r="1" class="pt"/><circle cx="15.5" cy="10.5" r="1" class="pt"/></svg>
+        Perguntas
+      </button>
+    </div>
+
+    <!-- ========== PAINEL VOTAÇÃO ========== -->
+    <section class="cartao painel" id="painel-votacao" role="tabpanel" aria-labelledby="aba-votacao">
+
+      <!-- Estado 1: votar -->
+      <div class="estado" id="votacao-form">
+        <div class="cartao-titulo">
+          <svg class="ico-barras" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="4.5" height="11" rx="1.5"/><rect x="9.75" y="3" width="4.5" height="18" rx="1.5"/><rect x="16.5" y="13" width="4.5" height="8" rx="1.5"/></svg>
+          <div>
+            <h2>Votação <span class="linha-titulo"></span></h2>
+            <p>Participe da enquete do evento.</p>
+          </div>
+        </div>
+
+        <svg class="ilustra" viewBox="0 0 240 160" aria-hidden="true"><use href="#ilustra-robo"/></svg>
+
+        <p class="aviso-rodada" id="aviso-rodada" role="status" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+          Nova votação aberta! Você já pode votar de novo.
+        </p>
+
+        <p class="pergunta-enquete" id="pergunta-enquete"></p>
+
+        <div class="botoes-voto">
+          <button class="btn-voto sim" data-voto="SIM">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+            <span>Sim</span>
+          </button>
+          <button class="btn-voto nao" data-voto="NAO">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+            <span>Não</span>
+          </button>
+        </div>
+        <p class="erro" id="votacao-erro" role="alert" hidden></p>
+
+        <p class="nota">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
+          Após votar, você verá o seu voto e o placar em tempo real aqui mesmo.
+        </p>
+      </div>
+
+      <!-- Estado 2: voto registrado -->
+      <div class="estado" id="votacao-ok" hidden>
+        <svg class="ilustra ilustra-pequena" viewBox="0 0 240 160" aria-hidden="true"><use href="#ilustra-ok"/></svg>
+        <h2 class="titulo-ok" tabindex="-1">Seu voto foi registrado!</h2>
+        <p class="sub-ok">Obrigado por participar deste importante debate sobre o futuro.</p>
+
+        <div class="voto-registrado compacto" id="voto-registrado">
+          <svg class="ico-sim" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+          <svg class="ico-nao" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+          <small>Você votou:</small>
+          <strong id="voto-texto">Sim</strong>
+        </div>
+
+        <!-- Placar ao vivo no próprio celular -->
+        <div class="mini-placar" aria-live="polite">
+          <p class="mini-titulo">
+            <span class="ponto-vivo" aria-hidden="true"></span>
+            Resultado em tempo real
+          </p>
+
+          <div class="mini-linha sim">
+            <div class="mini-cabecalho">
+              <span class="mini-rotulo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+                Sim
+              </span>
+              <span class="mini-numeros"><strong id="mini-pct-sim">0%</strong> <small><span id="mini-votos-sim">0</span> votos</small></span>
+            </div>
+            <div class="trilho"><div class="barra" id="mini-barra-sim"></div></div>
+          </div>
+
+          <div class="mini-linha nao">
+            <div class="mini-cabecalho">
+              <span class="mini-rotulo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                Não
+              </span>
+              <span class="mini-numeros"><strong id="mini-pct-nao">0%</strong> <small><span id="mini-votos-nao">0</span> votos</small></span>
+            </div>
+            <div class="trilho"><div class="barra" id="mini-barra-nao"></div></div>
+          </div>
+
+          <p class="mini-total">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.2"/><circle cx="5" cy="9" r="2.4"/><circle cx="19" cy="9" r="2.4"/><path d="M6.5 20v-2.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5V20zM.8 19v-1.6c0-2 1.6-3.4 3.8-3.4.7 0 1.3.1 1.8.4-.8 1-1.3 2.3-1.3 3.7V19zm22.4 0v-1.6c0-2-1.6-3.4-3.8-3.4-.7 0-1.3.1-1.8.4.8 1 1.3 2.3 1.3 3.7V19z"/></svg>
+            Total de votos: <strong id="mini-total">0</strong>
+          </p>
+        </div>
+
+        <p class="nota">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
+          O placar se atualiza sozinho. Quando uma nova votação for aberta, os botões para votar voltam aqui.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========== PAINEL PERGUNTAS ========== -->
+    <section class="cartao painel" id="painel-perguntas" role="tabpanel" aria-labelledby="aba-perguntas" hidden>
+
+      <!-- Estado 1: formulário -->
+      <form class="estado" id="pergunta-form" novalidate>
+        <svg class="ilustra" viewBox="0 0 240 160" aria-hidden="true"><use href="#ilustra-robo"/></svg>
+        <h2 class="titulo-ok">Envie sua pergunta</h2>
+        <p class="sub-ok">Participe da conversa! Envie sua pergunta para os palestrantes.</p>
+
+        <label class="campo">
+          <span class="rotulo">Seu nome</span>
+          <span class="entrada">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>
+            <input type="text" name="nome" id="campo-nome" placeholder="Digite seu nome" maxlength="80" autocomplete="name" required>
+          </span>
+        </label>
+
+        <label class="campo">
+          <span class="rotulo">Sua pergunta</span>
+          <span class="entrada area">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+            <textarea name="pergunta" id="campo-pergunta" placeholder="Digite sua pergunta aqui..." maxlength="500" rows="4" required></textarea>
+          </span>
+          <span class="contador"><span id="contador-pergunta">0</span>/500</span>
+        </label>
+
+        <p class="erro" id="pergunta-erro" role="alert" hidden></p>
+
+        <button type="submit" class="btn-principal" id="btn-enviar">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+          <span>Enviar pergunta</span>
+        </button>
+
+        <p class="nota">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
+          Sua pergunta poderá ser exibida no telão durante o evento.
+        </p>
+      </form>
+
+      <!-- Estado 2: pergunta registrada -->
+      <div class="estado" id="pergunta-ok" hidden>
+        <svg class="ilustra" viewBox="0 0 240 160" aria-hidden="true"><use href="#ilustra-ok"/></svg>
+        <h2 class="titulo-ok" tabindex="-1">Pergunta registrada!</h2>
+        <p class="sub-ok">Obrigado por participar.<br>Sua pergunta foi enviada com sucesso.</p>
+
+        <div class="resumo">
+          <div class="resumo-linha">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>
+            <div>
+              <small>Nome</small>
+              <strong id="resumo-nome"></strong>
+            </div>
+          </div>
+          <div class="resumo-linha">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="10.5" r="1" class="pt"/><circle cx="12" cy="10.5" r="1" class="pt"/><circle cx="15.5" cy="10.5" r="1" class="pt"/></svg>
+            <div>
+              <small>Sua pergunta</small>
+              <p id="resumo-pergunta"></p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-principal" id="btn-outra">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+          <span>Enviar outra pergunta</span>
+        </button>
+
+        <p class="nota">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
+          Sua pergunta poderá aparecer no telão durante o evento.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/comum.js"></script>
+  <script src="assets/js/participante.js"></script>
+</body>
+</html>

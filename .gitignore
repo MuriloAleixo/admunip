@@ -1,0 +1,9 @@
+# Backend do Google (colado direto no Apps Script, não vai para o site)
+google-apps-script/
+
+# Guia de configuração do Google
+INSTRUCOES_GOOGLE.md
+
+#ia
+.claude
+.claude/
