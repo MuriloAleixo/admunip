@@ -30,7 +30,7 @@
   abas.forEach(function (aba, i) {
     aba.addEventListener("click", function () {
       ativarAba(aba.getAttribute("data-aba"));
-      if (aba.getAttribute("data-aba") === "votacao") atualizarPlacar();
+      if (aba.getAttribute("data-aba") === "votacao") atualizarVotacao();
     });
     aba.addEventListener("keydown", function (e) {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
@@ -43,38 +43,45 @@
   ativarAba(location.hash === "#perguntas" ? "perguntas" : "votacao");
 
   /* ---------- VOTAÇÃO ---------- */
-  $("pergunta-enquete").innerHTML = Util.destacar(CFG.PERGUNTA_VOTACAO || "");
-
+  // A pergunta, a rodada e se a votação está aberta vêm da planilha (são
+  // definidas no painel de controle). Todos os celulares consultam esse
+  // estado de tempos em tempos: quando você ativa outra pergunta, os
+  // botões Sim/Não voltam sozinhos, já com a pergunta nova.
   var botoesVoto = Array.prototype.slice.call(document.querySelectorAll(".btn-voto"));
   var INTERVALO_PLACAR = Math.max(5000, CFG.INTERVALO_PLACAR_CELULAR_MS || 8000);
   var timerPlacar = null;
-  var buscandoPlacar = false;
+  var buscando = false;
+  var estado = null; // última resposta do placar: { rodada, pergunta, aberta, sim, nao }
 
   function mostrarErro(el, msg) {
     el.textContent = msg;
     el.hidden = !msg;
   }
 
-  function jaVotou() { return !!store.get(CHAVE_VOTO); }
-
-  function mostrarVotoRegistrado(voto, focar) {
-    var caixa = $("voto-registrado");
-    caixa.classList.toggle("eh-nao", voto === "NAO");
-    $("voto-texto").textContent = voto === "NAO" ? "Não" : "Sim";
-    document.querySelector(".mini-placar").classList.add("aguardando");
-    $("votacao-form").hidden = true;
-    $("votacao-ok").hidden = false;
-    if (focar) $("votacao-ok").querySelector(".titulo-ok").focus();
+  function votoAtual() {
+    var voto = store.get(CHAVE_VOTO);
+    return voto === "SIM" || voto === "NAO" ? voto : null;
   }
 
-  // Volta para os botões Sim/Não (usado quando a votação é zerada).
-  function liberarNovoVoto() {
-    clearTimeout(timerPlacar);
-    store.remove(CHAVE_VOTO);
-    store.remove(CHAVE_RODADA);
-    $("votacao-ok").hidden = true;
-    $("votacao-form").hidden = false;
-    $("aviso-rodada").hidden = false;
+  // Sem pergunta ativada no painel, usa a do config.js.
+  function textoPergunta(r) {
+    return (r && r.pergunta) || CFG.PERGUNTA_VOTACAO || "";
+  }
+
+  function mostrarEstado(id) {
+    ["votacao-form", "votacao-ok", "votacao-fechada"].forEach(function (outro) {
+      $(outro).hidden = outro !== id;
+    });
+  }
+
+  function mostrarVotoRegistrado(voto) {
+    $("voto-registrado").classList.toggle("eh-nao", voto === "NAO");
+    $("voto-texto").textContent = voto === "NAO" ? "Não" : "Sim";
+    mostrarEstado("votacao-ok");
+  }
+
+  function habilitarVoto(sim) {
+    botoesVoto.forEach(function (b) { b.disabled = !sim; });
   }
 
   function renderMiniPlacar(r) {
@@ -92,65 +99,109 @@
   }
 
   /*
-   * Busca o placar para quem já votou. A mesma resposta traz a rodada:
-   * se ela mudou, a votação foi zerada e os botões Sim/Não voltam.
+   * Aplica o estado vindo da planilha. Se a rodada mudou (pergunta nova
+   * ou votação zerada), o voto guardado no aparelho deixa de valer.
    */
-  function atualizarPlacar() {
+  function aplicarEstado(r) {
+    var anterior = estado;
+    estado = r;
+    var rodada = String(r.rodada || 1);
+    var aberta = r.aberta !== false;
+    var mudouRodada = !!anterior && String(anterior.rodada) !== rodada;
+
+    if (votoAtual() && store.get(CHAVE_RODADA) !== rodada) {
+      store.remove(CHAVE_VOTO);
+      store.remove(CHAVE_RODADA);
+      mudouRodada = true;
+    }
+
+    var html = Util.destacar(textoPergunta(r));
+    $("pergunta-enquete").innerHTML = html;
+    $("pergunta-enquete").classList.remove("carregando-texto");
+    $("pergunta-votada").innerHTML = html;
+
+    var status = $("status-votacao");
+    status.classList.remove("verificando");
+    status.classList.toggle("aguardando", !aberta);
+    $("status-votacao-texto").textContent = aberta ? "Votação aberta" : "Aguardando liberação";
+
+    var voto = votoAtual();
+    if (voto) {
+      mostrarVotoRegistrado(voto);
+      renderMiniPlacar(r);
+      document.querySelector(".mini-placar").classList.toggle("encerrada", !aberta);
+      $("mini-titulo-texto").textContent = aberta ? "Resultado em tempo real" : "Votação parada • resultado final";
+    } else if (aberta) {
+      if (mudouRodada) $("aviso-rodada").hidden = false;
+      habilitarVoto(true);
+      mostrarEstado("votacao-form");
+    } else {
+      $("aviso-rodada").hidden = true;
+      mostrarEstado("votacao-fechada");
+    }
+  }
+
+  // Busca o estado da votação (e o placar) na planilha.
+  function atualizarVotacao() {
     clearTimeout(timerPlacar);
-    if (!jaVotou() || buscandoPlacar) return;
-    buscandoPlacar = true;
+    if (buscando) return;
+    buscando = true;
 
     API.placar()
       .then(function (r) {
-        if (!jaVotou()) return;
-        if (r.rodada != null && String(r.rodada) !== store.get(CHAVE_RODADA)) {
-          liberarNovoVoto();
-          return;
-        }
-        renderMiniPlacar(r);
+        mostrarErro($("votacao-erro"), "");
+        aplicarEstado(r);
       })
-      .catch(function (err) { console.warn("Não foi possível atualizar o placar.", err); })
+      .catch(function (err) {
+        console.warn("Não foi possível atualizar a votação.", err);
+        if (!estado) mostrarErro($("votacao-erro"), "Não foi possível carregar a votação. Tentando de novo...");
+      })
       .then(function () {
-        buscandoPlacar = false;
-        agendarPlacar();
+        buscando = false;
+        agendar();
       });
   }
 
-  // Próxima atualização, só com a tela de voto visível. O intervalo varia
+  // Próxima atualização, só com a aba de votação visível. O intervalo varia
   // um pouco para os celulares não consultarem a planilha todos juntos.
-  function agendarPlacar() {
+  function agendar() {
     clearTimeout(timerPlacar);
-    if (!jaVotou() || document.visibilityState !== "visible" || $("painel-votacao").hidden) return;
-    timerPlacar = setTimeout(atualizarPlacar, INTERVALO_PLACAR * (0.85 + Math.random() * 0.3));
+    if (document.visibilityState !== "visible" || $("painel-votacao").hidden) return;
+    timerPlacar = setTimeout(atualizarVotacao, INTERVALO_PLACAR * (0.85 + Math.random() * 0.3));
   }
 
   function votar(voto, botao) {
+    if (!estado) return;
     mostrarErro($("votacao-erro"), "");
     $("aviso-rodada").hidden = true;
-    botoesVoto.forEach(function (b) { b.disabled = true; });
+    habilitarVoto(false);
     botao.classList.add("carregando");
 
-    API.votar(voto)
+    API.votar(voto, estado.rodada)
       .then(function (resp) {
         // Se o aparelho já tinha votado, a planilha devolve o voto original.
-        var registrado = resp.voto || voto;
-        store.set(CHAVE_VOTO, registrado);
-        store.set(CHAVE_RODADA, String(resp.rodada || 1));
-        mostrarVotoRegistrado(registrado, true);
+        store.set(CHAVE_VOTO, resp.voto || voto);
+        store.set(CHAVE_RODADA, String(resp.rodada || estado.rodada || 1));
+        document.querySelector(".mini-placar").classList.add("aguardando");
         // A resposta do voto já traz o placar; se não trouxer, busca.
         if (resp.placar) {
-          renderMiniPlacar(resp.placar);
-          agendarPlacar();
+          aplicarEstado(resp.placar);
+          agendar();
         } else {
-          atualizarPlacar();
+          mostrarVotoRegistrado(resp.voto || voto);
+          atualizarVotacao();
         }
+        $("votacao-ok").querySelector(".titulo-ok").focus();
       })
       .catch(function (err) {
         console.error(err);
-        mostrarErro($("votacao-erro"), "Não foi possível registrar seu voto. Verifique sua conexão e tente novamente.");
+        // Pergunta trocada ou votação encerrada: mostra o motivo e recarrega.
+        mostrarErro($("votacao-erro"), err.definitivo ? err.message :
+          "Não foi possível registrar seu voto. Verifique sua conexão e tente novamente.");
+        if (err.definitivo) atualizarVotacao();
       })
       .then(function () {
-        botoesVoto.forEach(function (b) { b.disabled = false; });
+        if (!$("votacao-form").hidden) habilitarVoto(true);
         botao.classList.remove("carregando");
       });
   }
@@ -159,16 +210,18 @@
     botao.addEventListener("click", function () { votar(botao.getAttribute("data-voto"), botao); });
   });
 
-  // Quem já votou neste aparelho vê direto o voto e o placar.
-  var votoSalvo = store.get(CHAVE_VOTO);
-  if (votoSalvo === "SIM" || votoSalvo === "NAO") {
-    mostrarVotoRegistrado(votoSalvo, false);
-    atualizarPlacar();
+  // Quem já votou neste aparelho vê direto o voto (o placar chega em seguida).
+  // Os botões só são liberados depois de saber qual é a pergunta da vez.
+  habilitarVoto(false);
+  if (votoAtual()) {
+    document.querySelector(".mini-placar").classList.add("aguardando");
+    mostrarVotoRegistrado(votoAtual());
   }
+  atualizarVotacao();
 
   // Pausa com a tela apagada/outro app; ao voltar, atualiza na hora.
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") atualizarPlacar();
+    if (document.visibilityState === "visible") atualizarVotacao();
     else clearTimeout(timerPlacar);
   });
 

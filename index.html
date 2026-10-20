@@ -89,6 +89,12 @@
     <!-- ========== PAINEL VOTAÇÃO ========== -->
     <section class="cartao painel" id="painel-votacao" role="tabpanel" aria-labelledby="aba-votacao">
 
+      <!-- Status da votação (definido no painel de controle) -->
+      <p class="status-votacao verificando" id="status-votacao" role="status">
+        <span class="ponto-vivo" aria-hidden="true"></span>
+        <span id="status-votacao-texto">Verificando a votação...</span>
+      </p>
+
       <!-- Estado 1: votar -->
       <div class="estado" id="votacao-form">
         <div class="cartao-titulo">
@@ -106,7 +112,7 @@
           Nova votação aberta! Você já pode votar de novo.
         </p>
 
-        <p class="pergunta-enquete" id="pergunta-enquete"></p>
+        <p class="pergunta-enquete carregando-texto" id="pergunta-enquete">Carregando a pergunta...</p>
 
         <div class="botoes-voto">
           <button class="btn-voto sim" data-voto="SIM">
@@ -132,6 +138,8 @@
         <h2 class="titulo-ok" tabindex="-1">Seu voto foi registrado!</h2>
         <p class="sub-ok">Obrigado por participar deste importante debate sobre o futuro.</p>
 
+        <p class="pergunta-votada" id="pergunta-votada"></p>
+
         <div class="voto-registrado compacto" id="voto-registrado">
           <svg class="ico-sim" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
           <svg class="ico-nao" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
@@ -143,7 +151,7 @@
         <div class="mini-placar" aria-live="polite">
           <p class="mini-titulo">
             <span class="ponto-vivo" aria-hidden="true"></span>
-            Resultado em tempo real
+            <span id="mini-titulo-texto">Resultado em tempo real</span>
           </p>
 
           <div class="mini-linha sim">
@@ -177,6 +185,18 @@
         <p class="nota">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
           O placar se atualiza sozinho. Quando uma nova votação for aberta, os botões para votar voltam aqui.
+        </p>
+      </div>
+
+      <!-- Estado 3: nenhuma votação aberta -->
+      <div class="estado" id="votacao-fechada" hidden>
+        <svg class="ilustra" viewBox="0 0 240 160" aria-hidden="true"><use href="#ilustra-robo"/></svg>
+        <h2 class="titulo-ok">Aguardando liberação</h2>
+        <p class="sub-ok">A votação ainda não foi liberada. Assim que a próxima pergunta for liberada, ela aparece aqui sozinha.</p>
+
+        <p class="nota">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg>
+          Deixe esta página aberta. Enquanto isso, você pode enviar sua pergunta na aba Perguntas.
         </p>
       </div>
     </section>

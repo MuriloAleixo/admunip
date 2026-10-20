@@ -1,5 +1,5 @@
 /* =====================================================================
-   Código compartilhado pelas 3 páginas:
+   Código compartilhado pelas páginas:
    - API: comunicação com o Google Apps Script (ou modo demonstração)
    - Utilitários: escape de HTML, destaque de palavras, formatação
    - Fundo animado com "rede neural"
@@ -73,54 +73,158 @@
   }
 
   /* ---------- modo demonstração (sem planilha) ---------- */
+  // Imita o Google Apps Script guardando tudo no navegador. Abra o painel,
+  // o celular e os telões no mesmo navegador para testar o fluxo inteiro.
   function demoLer(chave, padrao) {
     try { return JSON.parse(store.get(chave)) || padrao; } catch (e) { return padrao; }
   }
+  function demoSalvar(chave, valor) { store.set(chave, JSON.stringify(valor)); }
   function atraso(valor) {
     return new Promise(function (ok) { setTimeout(function () { ok(valor); }, 450); });
   }
+  function demoErro(msg) {
+    var erro = new Error(msg);
+    erro.definitivo = true;
+    return new Promise(function (ok, falha) { setTimeout(function () { falha(erro); }, 450); });
+  }
   function demoRodada() { return Number(store.get("iaunip_demo_rodada")) || 1; }
+  function demoEstado() {
+    var e = demoLer("iaunip_demo_estado", {});
+    return { pergunta: e.pergunta || "", enqueteId: e.enqueteId || null, aberta: e.aberta !== false };
+  }
+  function demoProximoId(chave) {
+    var id = (Number(store.get(chave)) || 0) + 1;
+    store.set(chave, String(id));
+    return id;
+  }
   var demo = {
-    votar: function (voto) {
+    votar: function (voto, rodada) {
+      if (!demoEstado().aberta) return demoErro("A votação está encerrada.");
+      if (rodada != null && String(rodada) !== String(demoRodada())) {
+        return demoErro("A pergunta da votação mudou. Confira a nova pergunta e vote de novo.");
+      }
       var votos = demoLer("iaunip_demo_votos", {});
       var id = idDispositivo();
       var duplicado = !!votos[id];
       if (!duplicado) votos[id] = voto;
-      store.set("iaunip_demo_votos", JSON.stringify(votos));
+      demoSalvar("iaunip_demo_votos", votos);
       return demo.placar().then(function (placar) {
         return atraso({ ok: true, voto: votos[id], duplicado: duplicado, rodada: demoRodada(), placar: placar });
       });
     },
     status: function () {
-      return Promise.resolve({ ok: true, rodada: demoRodada() });
+      var e = demoEstado();
+      return Promise.resolve({ ok: true, rodada: demoRodada(), pergunta: e.pergunta, aberta: e.aberta });
     },
-    // No modo demonstração qualquer senha é aceita.
     zerar: function () {
       store.remove("iaunip_demo_votos");
       store.set("iaunip_demo_rodada", String(demoRodada() + 1));
-      return atraso({ ok: true, rodada: demoRodada() });
+      return { ok: true, rodada: demoRodada() };
     },
     zerarPerguntas: function () {
       var rodada = (Number(store.get("iaunip_demo_rodada_perguntas")) || 1) + 1;
       store.remove("iaunip_demo_perguntas");
+      store.remove("iaunip_demo_destaque");
       store.set("iaunip_demo_rodada_perguntas", String(rodada));
-      return atraso({ ok: true, rodada: rodada });
+      return { ok: true, rodada: rodada };
     },
     enviarPergunta: function (nome, pergunta) {
       var lista = demoLer("iaunip_demo_perguntas", []);
-      var item = { id: Date.now(), nome: nome, pergunta: pergunta, hora: horaAgora() };
+      var item = { id: demoProximoId("iaunip_demo_ultimo_id"), nome: nome, pergunta: pergunta, hora: horaAgora(), exibir: false };
       lista.push(item);
-      store.set("iaunip_demo_perguntas", JSON.stringify(lista));
+      demoSalvar("iaunip_demo_perguntas", lista);
       return atraso({ ok: true, pergunta: item });
     },
     placar: function () {
       var votos = demoLer("iaunip_demo_votos", {});
       var sim = 0, nao = 0;
       Object.keys(votos).forEach(function (k) { if (votos[k] === "SIM") sim++; else nao++; });
-      return Promise.resolve({ ok: true, sim: sim, nao: nao, total: sim + nao, rodada: demoRodada() });
+      var e = demoEstado();
+      return Promise.resolve({ ok: true, sim: sim, nao: nao, total: sim + nao, rodada: demoRodada(), pergunta: e.pergunta, aberta: e.aberta });
     },
     perguntas: function () {
-      return Promise.resolve({ ok: true, perguntas: demoLer("iaunip_demo_perguntas", []) });
+      var lista = demoLer("iaunip_demo_perguntas", [])
+        .filter(function (p) { return p.exibir; })
+        .map(function (p) { return { id: p.id, nome: p.nome, pergunta: p.pergunta, hora: p.hora }; });
+      return Promise.resolve({ ok: true, perguntas: lista, destaque: demoLer("iaunip_demo_destaque", null) });
+    },
+    dadosAdmin: function () {
+      var e = demoEstado();
+      var destaque = demoLer("iaunip_demo_destaque", null);
+      return demo.placar().then(function (p) {
+        return {
+          ok: true, rodada: p.rodada, aberta: e.aberta, pergunta: e.pergunta, enqueteAtiva: e.enqueteId,
+          placar: { sim: p.sim, nao: p.nao, total: p.total },
+          enquetes: demoLer("iaunip_demo_enquetes", []),
+          perguntas: demoLer("iaunip_demo_perguntas", []),
+          destaque: destaque ? destaque.id : null,
+        };
+      });
+    },
+    // Painel de controle. No modo demonstração qualquer senha é aceita.
+    admin: function (acao, d) {
+      var enquetes = demoLer("iaunip_demo_enquetes", []);
+      var estado = demoEstado();
+      var r = { ok: true };
+      function achar(lista, id) {
+        for (var i = 0; i < lista.length; i++) if (Number(lista[i].id) === Number(id)) return i;
+        return -1;
+      }
+      function ativar(id) {
+        demo.zerar();
+        var texto = enquetes[achar(enquetes, id)].pergunta;
+        demoSalvar("iaunip_demo_estado", { pergunta: texto, enqueteId: Number(id), aberta: true });
+      }
+
+      if (acao === "admin") return demo.dadosAdmin();
+      if (acao === "salvarEnquete") {
+        var texto = String(d.pergunta || "").trim().replace(/\s+/g, " ");
+        if (texto.length < 5) return demoErro("Escreva a pergunta (mínimo de 5 caracteres).");
+        var id = Number(d.id) || 0;
+        if (id) {
+          var i = achar(enquetes, id);
+          if (i < 0) return demoErro("Pergunta não encontrada.");
+          enquetes[i].pergunta = texto;
+          if (estado.enqueteId === id) { estado.pergunta = texto; demoSalvar("iaunip_demo_estado", estado); }
+        } else {
+          id = demoProximoId("iaunip_demo_ultimo_id_enquete");
+          enquetes.push({ id: id, pergunta: texto, criada: horaAgora() });
+        }
+        demoSalvar("iaunip_demo_enquetes", enquetes);
+        if (d.ativar) ativar(id);
+        r.id = id;
+      } else if (acao === "excluirEnquete") {
+        if (estado.enqueteId === Number(d.id) && estado.aberta) {
+          return demoErro("Esta pergunta está em votação. Pare a votação ou ative outra antes de excluir.");
+        }
+        var k = achar(enquetes, d.id);
+        if (k > -1) enquetes.splice(k, 1);
+        demoSalvar("iaunip_demo_enquetes", enquetes);
+      } else if (acao === "ativarEnquete") {
+        if (achar(enquetes, d.id) < 0) return demoErro("Pergunta não encontrada.");
+        ativar(d.id);
+      } else if (acao === "abrirVotacao") {
+        estado.aberta = !!d.aberta;
+        demoSalvar("iaunip_demo_estado", estado);
+      } else if (acao === "perguntaTelao") {
+        var perguntas = demoLer("iaunip_demo_perguntas", []);
+        var j = achar(perguntas, d.id);
+        if (j < 0) return demoErro("Pergunta não encontrada (talvez as perguntas tenham sido zeradas).");
+        perguntas[j].exibir = !!d.exibir;
+        demoSalvar("iaunip_demo_perguntas", perguntas);
+        var destaque = demoLer("iaunip_demo_destaque", null);
+        if (d.exibir && d.destacar) demoSalvar("iaunip_demo_destaque", { id: Number(d.id), versao: String(Date.now()) });
+        else if (!d.exibir && destaque && destaque.id === Number(d.id)) store.remove("iaunip_demo_destaque");
+      } else if (acao === "zerar") {
+        r = demo.zerar();
+      } else if (acao === "zerarPerguntas") {
+        r = demo.zerarPerguntas();
+      }
+
+      return demo.dadosAdmin().then(function (dados) {
+        r.dados = dados;
+        return atraso(r);
+      });
     },
   };
 
@@ -132,28 +236,31 @@
   window.API = {
     demo: DEMO,
     idDispositivo: idDispositivo,
-    votar: function (voto) {
-      if (DEMO) return demo.votar(voto);
-      return apiPost({ acao: "votar", voto: voto, dispositivo: idDispositivo() });
+    // A rodada é a da pergunta que estava na tela: se ela mudou, o voto é recusado.
+    votar: function (voto, rodada) {
+      if (DEMO) return demo.votar(voto, rodada);
+      return apiPost({ acao: "votar", voto: voto, rodada: rodada, dispositivo: idDispositivo() });
     },
     enviarPergunta: function (nome, pergunta) {
       if (DEMO) return demo.enviarPergunta(nome, pergunta);
       return apiPost({ acao: "pergunta", nome: nome, pergunta: pergunta, dispositivo: idDispositivo() });
     },
-    // Rodada atual da votação (sobe a cada "zerar votação").
+    // Rodada, pergunta e se a votação está aberta.
     status: function () { return DEMO ? demo.status() : apiGet("status"); },
-    zerar: function (senha) {
-      if (DEMO) return demo.zerar(senha);
-      return apiPost({ acao: "zerar", senha: senha });
-    },
+    zerar: function (senha) { return API.admin("zerar", senha); },
     // Arquiva as perguntas no "Histórico de perguntas" e limpa o telão.
-    zerarPerguntas: function (senha) {
-      if (DEMO) return demo.zerarPerguntas(senha);
-      return apiPost({ acao: "zerarPerguntas", senha: senha });
-    },
+    zerarPerguntas: function (senha) { return API.admin("zerarPerguntas", senha); },
     placar: function () { return DEMO ? demo.placar() : apiGet("placar"); },
     perguntas: function () { return DEMO ? demo.perguntas() : apiGet("perguntas"); },
+    // Ações do painel de controle (todas exigem a senha de administrador).
+    admin: function (acao, senha, extra) {
+      if (DEMO) return demo.admin(acao, extra || {});
+      var dados = { acao: acao, senha: senha };
+      Object.keys(extra || {}).forEach(function (k) { dados[k] = extra[k]; });
+      return apiPost(dados);
+    },
   };
+  var API = window.API;
 
   /* ---------- utilitários ---------- */
   function escapeHtml(texto) {

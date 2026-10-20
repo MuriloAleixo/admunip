@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#040a22">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Painel de Controle | UNIP</title>
+  <meta name="description" content="Painel de controle da votação e das perguntas — Inteligência Artificial em Ação, UNIP.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800;1,900&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="pagina-controle">
+  <canvas id="fundo-rede" aria-hidden="true"></canvas>
+  <div class="fundo-brilho" aria-hidden="true"></div>
+
+  <header class="topo">
+    <div class="topo-marca">
+      <div class="logo-unip">UNIP</div>
+      <div class="titulo-evento">
+        <h1>Painel de<br><span>Controle</span></h1>
+        <p class="eixos">Votação <i>•</i> Perguntas <i>•</i> Telões</p>
+      </div>
+    </div>
+    <img class="topo-ia" src="assets/img/ia-head.png" alt="" aria-hidden="true">
+  </header>
+
+  <!-- ========== LOGIN ========== -->
+  <main class="controle-login" id="tela-login">
+    <form class="cartao painel" id="form-login" novalidate>
+      <div class="cartao-titulo">
+        <svg class="ico-barras contorno" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <div>
+          <h2>Acesso restrito <span class="linha-titulo"></span></h2>
+          <p>Digite a senha de administrador do evento.</p>
+        </div>
+      </div>
+
+      <label class="campo">
+        <span class="rotulo">Senha de administrador</span>
+        <span class="entrada">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input type="password" id="login-senha" autocomplete="current-password" placeholder="Digite a senha">
+        </span>
+      </label>
+
+      <p class="erro" id="login-erro" role="alert" hidden></p>
+
+      <button type="submit" class="btn-principal" id="btn-entrar"><span>Entrar</span></button>
+    </form>
+  </main>
+
+  <!-- ========== PAINEL ========== -->
+  <main class="controle" id="tela-controle" hidden>
+    <nav class="barra-controle" aria-label="Atalhos">
+      <a class="btn-secundario btn-pequeno" href="placar.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="13" width="4.5" height="8" rx="1.2"/><rect x="9.75" y="8" width="4.5" height="13" rx="1.2"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.2"/></svg>
+        Telão do placar
+      </a>
+      <a class="btn-secundario btn-pequeno" href="perguntas.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+        Telão de perguntas
+      </a>
+      <a class="btn-secundario btn-pequeno" href="index.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+        Página do público
+      </a>
+      <span class="sincronia" id="sincronia" role="status">
+        <span class="ponto-vivo" aria-hidden="true"></span>
+        <span id="sincronia-texto">Conectando...</span>
+      </span>
+      <button type="button" class="btn-secundario btn-pequeno" id="btn-sair">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>
+        Sair
+      </button>
+    </nav>
+
+    <div class="controle-grade">
+      <!-- ---------- VOTAÇÃO ---------- -->
+      <section class="cartao painel-controle" aria-labelledby="titulo-votacao">
+        <div class="cartao-titulo">
+          <svg class="ico-barras" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="4.5" height="11" rx="1.5"/><rect x="9.75" y="3" width="4.5" height="18" rx="1.5"/><rect x="16.5" y="13" width="4.5" height="8" rx="1.5"/></svg>
+          <div>
+            <h2 id="titulo-votacao">Votação <span class="linha-titulo"></span></h2>
+            <p>Escreva as perguntas e escolha qual o público vai votar.</p>
+          </div>
+        </div>
+
+        <!-- Pergunta em votação agora -->
+        <div class="em-votacao" id="em-votacao">
+          <div class="em-votacao-topo">
+            <span class="chip chip-verde" id="chip-votacao">Votação aberta</span>
+            <small>Rodada <b id="ctl-rodada">–</b></small>
+          </div>
+          <p class="em-votacao-pergunta" id="ctl-pergunta"></p>
+
+          <div class="mini-placar aguardando" aria-live="polite">
+            <div class="mini-linha sim">
+              <div class="mini-cabecalho">
+                <span class="mini-rotulo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+                  Sim
+                </span>
+                <span class="mini-numeros"><strong id="ctl-pct-sim">0%</strong> <small><span id="ctl-votos-sim">0</span> votos</small></span>
+              </div>
+              <div class="trilho"><div class="barra" id="ctl-barra-sim"></div></div>
+            </div>
+            <div class="mini-linha nao">
+              <div class="mini-cabecalho">
+                <span class="mini-rotulo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                  Não
+                </span>
+                <span class="mini-numeros"><strong id="ctl-pct-nao">0%</strong> <small><span id="ctl-votos-nao">0</span> votos</small></span>
+              </div>
+              <div class="trilho"><div class="barra" id="ctl-barra-nao"></div></div>
+            </div>
+            <p class="mini-total">Total de votos: <strong id="ctl-total">0</strong></p>
+          </div>
+
+          <div class="acoes-linha">
+            <button type="button" class="btn-secundario btn-pequeno" id="btn-abrir-fechar">Parar votação</button>
+            <button type="button" class="btn-secundario btn-pequeno btn-perigo-suave" id="btn-zerar-votos">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              Zerar votos
+            </button>
+          </div>
+        </div>
+
+        <!-- Nova pergunta / edição -->
+        <form class="form-enquete" id="form-enquete" novalidate>
+          <label class="campo">
+            <span class="rotulo" id="rotulo-enquete">Nova pergunta para votação</span>
+            <span class="entrada area">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+              <textarea id="campo-enquete" maxlength="300" rows="3" placeholder="Ex.: A IA vai mudar a forma como estudamos?"></textarea>
+            </span>
+            <span class="contador"><span id="contador-enquete">0</span>/300 · o público responde Sim ou Não</span>
+          </label>
+
+          <p class="erro" id="enquete-erro" role="alert" hidden></p>
+
+          <div class="acoes-linha fim">
+            <button type="button" class="btn-secundario btn-pequeno" id="btn-cancelar-edicao" hidden>Cancelar edição</button>
+            <button type="submit" class="btn-secundario btn-pequeno" id="btn-salvar-enquete">Salvar</button>
+            <button type="button" class="btn-principal btn-pequeno" id="btn-salvar-ativar">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+              Salvar e ativar
+            </button>
+          </div>
+        </form>
+
+        <h3 class="subtitulo">Perguntas salvas <span class="contagem" id="qtd-enquetes">0</span></h3>
+        <ul class="lista-controle" id="lista-enquetes"></ul>
+      </section>
+
+      <!-- ---------- PERGUNTAS DO PÚBLICO ---------- -->
+      <section class="cartao painel-controle" aria-labelledby="titulo-perguntas">
+        <div class="cartao-titulo">
+          <svg class="ico-barras contorno" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="10.5" r="1" class="pt"/><circle cx="12" cy="10.5" r="1" class="pt"/><circle cx="15.5" cy="10.5" r="1" class="pt"/></svg>
+          <div>
+            <h2 id="titulo-perguntas">Perguntas do público <span class="linha-titulo"></span></h2>
+            <p>Escolha quais perguntas vão para o telão.</p>
+          </div>
+        </div>
+
+        <div class="filtros" role="group" aria-label="Filtrar perguntas">
+          <button type="button" class="filtro" data-filtro="fora" aria-pressed="true">Fora do telão <span class="contagem" id="qtd-fora">0</span></button>
+          <button type="button" class="filtro" data-filtro="telao" aria-pressed="false">No telão <span class="contagem" id="qtd-telao">0</span></button>
+          <button type="button" class="filtro" data-filtro="todas" aria-pressed="false">Todas <span class="contagem" id="qtd-todas">0</span></button>
+        </div>
+
+        <ul class="lista-controle" id="lista-perguntas"></ul>
+
+        <div class="acoes-linha fim">
+          <button type="button" class="btn-secundario btn-pequeno btn-perigo-suave" id="btn-zerar-perguntas">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            Zerar perguntas
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Confirmação das ações que mexem no que o público vê -->
+  <dialog class="modal" id="modal-confirmar" aria-labelledby="confirmar-titulo">
+    <form class="cartao modal-caixa" method="dialog">
+      <h2 id="confirmar-titulo"></h2>
+      <p class="modal-texto" id="confirmar-texto"></p>
+      <div class="modal-acoes">
+        <button type="button" class="btn-secundario" id="confirmar-cancelar">Cancelar</button>
+        <button type="button" class="btn-principal" id="confirmar-ok"><span>Confirmar</span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <p class="toast" id="toast" role="status" hidden></p>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/comum.js"></script>
+  <script src="assets/js/controle.js"></script>
+</body>
+</html>

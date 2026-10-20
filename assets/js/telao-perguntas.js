@@ -16,6 +16,9 @@
   var idAtual = null;
   var falhas = 0;
   var CHAVE_ID = "iaunip_telao_pergunta_atual";
+  var CHAVE_DESTAQUE = "iaunip_telao_destaque";
+  // Último pedido de "Mostrar agora" do painel de controle já atendido.
+  var destaqueVisto = Util.store.get(CHAVE_DESTAQUE);
 
   // Continua da última pergunta exibida caso a página seja recarregada.
   idAtual = Util.store.get(CHAVE_ID);
@@ -128,8 +131,26 @@
         falhas = 0;
         $("status-conexao").hidden = true;
         var nova = (r.perguntas || []).filter(function (p) { return p && p.pergunta; });
+
+        // "Mostrar agora" no painel: pula para a pergunta pedida, uma vez
+        // por pedido (o operador continua livre para navegar depois).
+        var pularPara = null;
+        if (r.destaque && String(r.destaque.versao) !== destaqueVisto) {
+          destaqueVisto = String(r.destaque.versao);
+          Util.store.set(CHAVE_DESTAQUE, destaqueVisto);
+          pularPara = String(r.destaque.id);
+        }
+
         var mudou = JSON.stringify(nova) !== JSON.stringify(lista);
-        if (!mudou) return;
+        if (!mudou) {
+          if (pularPara != null) {
+            for (var k = 0; k < lista.length; k++) {
+              if (String(lista[k].id) === pularPara) { irPara(k); break; }
+            }
+          }
+          return;
+        }
+        if (pularPara != null) idAtual = pularPara;
 
         var primeiraCarga = !lista.length;
         lista = nova;
@@ -150,7 +171,7 @@
         } else {
           limparLista();
         }
-        render(primeiraCarga || trocou);
+        render(primeiraCarga || trocou || pularPara != null);
       })
       .catch(function (err) {
         console.error(err);

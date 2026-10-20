@@ -28,8 +28,9 @@
   <main class="telao-conteudo placar">
     <div class="rotulo-secao">
       <svg class="ico-barras" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="13" width="4.5" height="8" rx="1.2"/><rect x="9.75" y="8" width="4.5" height="13" rx="1.2"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.2"/></svg>
-      <span>Resultado em tempo real</span>
+      <span id="rotulo-placar">Resultado em tempo real</span>
       <i class="linha-titulo"></i>
+      <span class="chip chip-cinza" id="chip-encerrada" hidden>Votação encerrada</span>
     </div>
 
     <h2 class="placar-pergunta" id="placar-pergunta"></h2>
@@ -68,7 +69,7 @@
       </div>
       <div class="ao-vivo">
         <svg viewBox="0 0 24 24" aria-hidden="true" class="contorno"><circle cx="12" cy="12" r="2" class="pt"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
-        <span>Os resultados são atualizados<br>automaticamente em tempo real.</span>
+        <span id="ao-vivo-texto">Os resultados são atualizados<br>automaticamente em tempo real.</span>
       </div>
     </div>
     <p class="status-conexao" id="status-conexao" hidden></p>

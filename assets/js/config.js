@@ -13,7 +13,8 @@ window.EVENTO_CONFIG = {
   // perguntas ficam salvos só no navegador (bom para testar o layout).
   API_URL: "https://script.google.com/macros/s/AKfycbydxqY_lEzBNF1l6RvXFqYMSJ8pplZETqPpIEQdXIcuDnvI1SWTbGjjYqRJhA6nQVeltg/exec",
 
-  // Pergunta da enquete (mostrada no celular e no telão).
+  // Pergunta padrão da enquete. Só é usada enquanto nenhuma pergunta for
+  // ativada no painel de controle (controle.html).
   PERGUNTA_VOTACAO:
     "A Inteligência Artificial pode ampliar oportunidades na educação e no trabalho?",
 
